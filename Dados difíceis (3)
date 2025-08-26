@@ -1,0 +1,58 @@
+import numpy as np
+import pandas as pd
+
+# Parâmetros
+mu = 0
+sigma = 1
+num_patterns = 300
+num_points = 64
+t = np.arange(1, num_points + 1)
+
+# Funções para gerar padrões
+def generate_normal():
+    return mu + np.random.normal(0, sigma, size=num_points)
+
+def generate_cyclic(alpha=2.0, period=20):
+    return mu + np.random.normal(0, sigma, size=num_points) + alpha * np.sin(2 * np.pi * t / period)
+
+def generate_trend(g=0.2):
+    return mu + np.random.normal(0, sigma, size=num_points) + g * t
+
+def generate_decreasing_trend(g=0.2):
+    return mu + np.random.normal(0, sigma, size=num_points) - g * t
+
+def generate_shift(k=1, s=2.0, P=20):
+    shift = np.where(t > P, k * s, 0)
+    return mu + np.random.normal(0, sigma, size=num_points) + shift
+
+def generate_negative_shift(k=1, s=2.0, P=20):
+    shift = np.where(t > P, k * s, 0)
+    return mu + np.random.normal(0, sigma, size=num_points) - shift
+
+# Padrões com menor separabilidade: reduz impacto e aumenta sobreposição
+patterns = {
+    "Normal": generate_normal,
+    "Cyclic": lambda: generate_cyclic(alpha=0.5, period=20),
+    "Increasing Trend": lambda: generate_trend(g=0.05),
+    "Decreasing Trend": lambda: generate_decreasing_trend(g=0.05),
+    "Upward Shift": lambda: generate_shift(k=1, s=0.5, P=32),
+    "Downward Shift": lambda: generate_negative_shift(k=1, s=0.5, P=32),
+}
+
+# Geração dos dados
+data = []
+for pattern_name, pattern_func in patterns.items():
+    for _ in range(num_patterns):
+        x_values = pattern_func()
+        for i in range(num_points):
+            data.append({
+                'pattern': pattern_name,
+                't': t[i],
+                'X(t)': x_values[i]
+            })
+
+# Criar DataFrame e salvar
+df_misturada = pd.DataFrame(data)
+file_path = "/mnt/data/control_chart_patterns_misturada.csv"
+df_misturada.to_csv(file_path, index=False)
+file_path
