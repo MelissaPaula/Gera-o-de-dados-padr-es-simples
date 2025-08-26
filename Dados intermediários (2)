@@ -1,0 +1,60 @@
+import numpy as np
+import pandas as pd
+
+# Parâmetros ajustados para dificultar a classificação
+mu = 0
+sigma = 1.2  # ruído maior para dificultar
+num_patterns = 300
+num_points = 64
+
+# Vetor de tempo
+t = np.arange(1, num_points + 1)
+
+# Funções para gerar os padrões com os novos parâmetros
+def generate_normal():
+    return mu + np.random.normal(0, sigma, size=num_points)
+
+def generate_cyclic(alpha=1.3, period=25):
+    return mu + np.random.normal(0, sigma, size=num_points) + alpha * np.sin(2 * np.pi * t / period)
+
+def generate_trend(g=0.12):
+    return mu + np.random.normal(0, sigma, size=num_points) + g * t
+
+def generate_decreasing_trend(g=0.12):
+    return mu + np.random.normal(0, sigma, size=num_points) - g * t
+
+def generate_shift(k=1, s=1.3, P=25):
+    shift = np.where(t > P, k * s, 0)
+    return mu + np.random.normal(0, sigma, size=num_points) + shift
+
+def generate_negative_shift(k=1, s=1.3, P=25):
+    shift = np.where(t > P, k * s, 0)
+    return mu + np.random.normal(0, sigma, size=num_points) - shift
+
+# Dicionário de padrões
+patterns = {
+    "Normal": generate_normal,
+    "Cyclic": generate_cyclic,
+    "Increasing Trend": generate_trend,
+    "Decreasing Trend": generate_decreasing_trend,
+    "Upward Shift": generate_shift,
+    "Downward Shift": generate_negative_shift,
+}
+
+# Lista para armazenar os dados
+data = []
+
+# Gerar os dados para cada padrão
+for pattern_name, pattern_func in patterns.items():
+    for _ in range(num_patterns):
+        x_values = pattern_func()
+        for i in range(num_points):
+            data.append({
+                'pattern': pattern_name,
+                't': t[i],
+                'X(t)': x_values[i]
+            })
+
+# Criar DataFrame e exportar como CSV
+df = pd.DataFrame(data)
+df.to_csv('control_chart_patterns_dificil.csv', index=False)
